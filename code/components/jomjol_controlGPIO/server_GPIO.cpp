@@ -559,6 +559,20 @@ esp_err_t GpioHandler::handleHttpRequest(httpd_req_t *req)
     return ESP_OK;    
 };
 
+bool GpioHandler::setGPIOValue(gpio_num_t gpio, bool value, std::string* errorText)
+{
+    if (gpioMap != NULL && gpioMap->find(gpio) != gpioMap->end())
+    {
+        (*gpioMap)[gpio]->setValue(value, GPIO_SET_SOURCE_INTERNAL, errorText);
+        return errorText->empty();
+    }
+    else
+    {
+        *errorText = "GPIO " + std::to_string((int)gpio) + " not configured";
+        return false;
+    }
+}
+
 void GpioHandler::flashLightEnable(bool value) 
 {
     ESP_LOGD(TAG, "GpioHandler::flashLightEnable %s", value ? "true" : "false");

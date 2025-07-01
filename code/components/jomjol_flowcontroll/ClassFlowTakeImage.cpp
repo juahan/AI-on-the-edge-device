@@ -10,6 +10,7 @@
 #include "CImageBasis.h"
 #include "ClassControllCamera.h"
 #include "MainFlowControl.h"
+#include "server_GPIO.h"
 
 #include "esp_wifi.h"
 #include "esp_log.h"
@@ -17,6 +18,7 @@
 #include "psram.h"
 
 #include <time.h>
+#include <algorithm>
 
 // #define DEBUG_DETAIL_ON
 // #define WIFITURNOFF
@@ -58,6 +60,13 @@ void ClassFlowTakeImage::SetInitialParameter(void)
     rawImage = NULL;
     disabled = false;
     namerawimage = "/sdcard/img_tmp/raw.jpg";
+    
+    // Initialize GPIO Picture Trigger parameters
+    pictureTriggerEnabled = false;
+    pictureTriggerDelay = 0.5f;
+    pictureTriggerGPIONumber = 12;
+    pictureTriggerDuration = 0.1f;
+    pictureTriggerMode = "hold";
 }
 
 // auslesen der Kameraeinstellungen aus der config.ini
@@ -512,6 +521,49 @@ bool ClassFlowTakeImage::ReadParameter(FILE *pfile, string &aktparamgraph)
                 Camera.useDemoMode();
             }
         }
+
+        else if ((toUpper(splitted[0]) == "PICTURETRIGGERGPIO") && (splitted.size() > 1))
+        {
+            pictureTriggerEnabled = alphanumericToBoolean(splitted[1]);
+        }
+
+        else if ((toUpper(splitted[0]) == "PICTURETRIGGERDELAY") && (splitted.size() > 1))
+        {
+            if (isStringNumeric(splitted[1]))
+            {
+                pictureTriggerDelay = std::stof(splitted[1]);
+                pictureTriggerDelay = std::max(0.0f, std::min(10.0f, pictureTriggerDelay));
+            }
+        }
+
+        else if ((toUpper(splitted[0]) == "PICTURETRIGGERGPIONUMBER") && (splitted.size() > 1))
+        {
+            if (isStringNumeric(splitted[1]))
+            {
+                pictureTriggerGPIONumber = std::stoi(splitted[1]);
+                // Validate GPIO number (12 or 13 are safe)
+                if (pictureTriggerGPIONumber != 12 && pictureTriggerGPIONumber != 13)
+                {
+                    pictureTriggerGPIONumber = 12; // Default to GPIO 12
+                }
+            }
+        }
+
+        else if ((toUpper(splitted[0]) == "PICTURETRIGGERDURATION") && (splitted.size() > 1))
+        {
+            if (isStringNumeric(splitted[1]))
+            {
+                pictureTriggerDuration = std::stof(splitted[1]);
+                pictureTriggerDuration = std::max(0.1f, std::min(5.0f, pictureTriggerDuration));
+            }
+        }
+
+        else if ((toUpper(splitted[0]) == "PICTURETRIGGERMODE") && (splitted.size() > 1))
+        {
+            pictureTriggerMode = toLower(splitted[1]);
+            if (pictureTriggerMode != "pulse" && pictureTriggerMode != "hold")
+                pictureTriggerMode = "hold";
+        }
     }
 
     Camera.setSensorDatenFromCCstatus(); // CCstatus >>> Kamera
@@ -535,6 +587,50 @@ string ClassFlowTakeImage::getHTMLSingleStep(string host)
     string result;
     result = "Raw Image: <br>\n<img src=\"" + host + "/img_tmp/raw.jpg\">\n";
     return result;
+}
+
+void ClassFlowTakeImage::triggerPictureGPIO()
+{
+    if (!pictureTriggerEnabled) return;
+    
+    GpioHandler *gpioHandler = gpio_handler_get();
+    if (gpioHandler != NULL && gpioHandler->isEnabled())
+    {
+        gpio_num_t gpio_num = (gpio_num_t)pictureTriggerGPIONumber;
+        std::string errorText = "";
+        bool success = gpioHandler->setGPIOValue(gpio_num, true, &errorText);
+        
+        if (success)
+        {
+            ESP_LOGI(TAG, "Picture trigger GPIO %d activated", pictureTriggerGPIONumber);
+        }
+        else
+        {
+            ESP_LOGE(TAG, "Failed to activate picture trigger GPIO: %s", errorText.c_str());
+        }
+    }
+}
+
+void ClassFlowTakeImage::deactivatePictureGPIO()
+{
+    if (!pictureTriggerEnabled) return;
+    
+    GpioHandler *gpioHandler = gpio_handler_get();
+    if (gpioHandler != NULL && gpioHandler->isEnabled())
+    {
+        gpio_num_t gpio_num = (gpio_num_t)pictureTriggerGPIONumber;
+        std::string errorText = "";
+        bool success = gpioHandler->setGPIOValue(gpio_num, false, &errorText);
+        
+        if (success)
+        {
+            ESP_LOGI(TAG, "Picture trigger GPIO %d deactivated", pictureTriggerGPIONumber);
+        }
+        else
+        {
+            ESP_LOGE(TAG, "Failed to deactivate picture trigger GPIO: %s", errorText.c_str());
+        }
+    }
 }
 
 // wird bei jeder Auswertrunde aufgerufen
@@ -563,7 +659,38 @@ bool ClassFlowTakeImage::doFlow(string zwtime)
         CFstatus.changedCameraSettings = false;
     }
 
+    // Trigger GPIO before taking picture
+    if (pictureTriggerEnabled) {
+        if (pictureTriggerMode == "pulse") {
+            // Pulse mode: activate GPIO for PictureTriggerDuration, then deactivate before picture flow
+            triggerPictureGPIO();
+            const TickType_t xPulse = (int)(pictureTriggerDuration * 1000) / portTICK_PERIOD_MS;
+            vTaskDelay(xPulse);
+            deactivatePictureGPIO();
+            // Wait for PictureTriggerDelay (if any) before starting picture flow
+            if (pictureTriggerDelay > 0) {
+                const TickType_t xDelay = (int)(pictureTriggerDelay * 1000) / portTICK_PERIOD_MS;
+                vTaskDelay(xDelay);
+            }
+        } else { // hold mode (default)
+            // Activate GPIO before picture flow, keep it on through the flow
+            triggerPictureGPIO();
+            if (pictureTriggerDelay > 0) {
+                const TickType_t xDelay = (int)(pictureTriggerDelay * 1000) / portTICK_PERIOD_MS;
+                vTaskDelay(xDelay);
+            }
+        }
+    }
+
     takePictureWithFlash(flash_duration);
+
+    // Deactivate GPIO after picture is taken
+    if (pictureTriggerEnabled && pictureTriggerMode == "hold") {
+        // In hold mode, deactivate after picture and PictureTriggerDuration
+        const TickType_t xDelay = (int)(pictureTriggerDuration * 1000) / portTICK_PERIOD_MS;
+        vTaskDelay(xDelay);
+        deactivatePictureGPIO();
+    }
 
 #ifdef WIFITURNOFF
     esp_wifi_start();

@@ -75,6 +75,7 @@ public:
     void taskHandler();
     void gpioInterrupt(GpioResult* gpioResult);  
     void flashLightEnable(bool value);
+    bool setGPIOValue(gpio_num_t gpio, bool value, std::string* errorText);
     bool isEnabled() { return _isEnabled; }
 #ifdef ENABLE_MQTT
     void handleMQTTconnect();

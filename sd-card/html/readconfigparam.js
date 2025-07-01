@@ -133,6 +133,11 @@ function ParseConfig() {
     ParamAddValue(param, catname, "CamZoomSize");
     ParamAddValue(param, catname, "LEDIntensity");
     ParamAddValue(param, catname, "Demo");
+    ParamAddValue(param, catname, "PictureTriggerGPIO");
+    ParamAddValue(param, catname, "PictureTriggerDelay");
+    ParamAddValue(param, catname, "PictureTriggerGPIONumber");
+    ParamAddValue(param, catname, "PictureTriggerDuration");
+    ParamAddValue(param, catname, "PictureTriggerMode");
 
     var catname = "Alignment";
     category[catname] = new Object();
@@ -504,6 +509,11 @@ function getCamConfig() {
     param["TakeImage"]["CamZoomOffsetY"]["enabled"] = true;
     param["TakeImage"]["CamZoomSize"]["enabled"] = true;
     param["TakeImage"]["LEDIntensity"]["enabled"] = true;
+    param["TakeImage"]["PictureTriggerGPIO"]["enabled"] = true;
+    param["TakeImage"]["PictureTriggerDelay"]["enabled"] = true;
+    param["TakeImage"]["PictureTriggerGPIONumber"]["enabled"] = true;
+    param["TakeImage"]["PictureTriggerDuration"]["enabled"] = true;
+    param["TakeImage"]["PictureTriggerMode"]["enabled"] = true;
 
     if (!param["System"]["Tooltip"]["found"]) {
         param["System"]["Tooltip"]["found"] = true;
@@ -639,6 +649,26 @@ function getCamConfig() {
     if (!param["TakeImage"]["LEDIntensity"]["found"]) {
         param["TakeImage"]["LEDIntensity"]["found"] = true;
         param["TakeImage"]["LEDIntensity"].value1 = '50';
+    }
+    if (!param["TakeImage"]["PictureTriggerGPIO"]["found"]) {
+        param["TakeImage"]["PictureTriggerGPIO"]["found"] = true;
+        param["TakeImage"]["PictureTriggerGPIO"].value1 = 'false';
+    }
+    if (!param["TakeImage"]["PictureTriggerDelay"]["found"]) {
+        param["TakeImage"]["PictureTriggerDelay"]["found"] = true;
+        param["TakeImage"]["PictureTriggerDelay"].value1 = '0.5';
+    }
+    if (!param["TakeImage"]["PictureTriggerGPIONumber"]["found"]) {
+        param["TakeImage"]["PictureTriggerGPIONumber"]["found"] = true;
+        param["TakeImage"]["PictureTriggerGPIONumber"].value1 = '12';
+    }
+    if (!param["TakeImage"]["PictureTriggerDuration"]["found"]) {
+        param["TakeImage"]["PictureTriggerDuration"]["found"] = true;
+        param["TakeImage"]["PictureTriggerDuration"].value1 = '0.1';
+    }
+    if (!param["TakeImage"]["PictureTriggerMode"]["found"]) {
+        param["TakeImage"]["PictureTriggerMode"]["found"] = true;
+        param["TakeImage"]["PictureTriggerMode"].value1 = 'hold';
     }
 
     return param;	

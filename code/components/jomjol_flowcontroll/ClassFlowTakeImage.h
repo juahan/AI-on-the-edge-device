@@ -15,8 +15,17 @@ protected:
     time_t TimeImageTaken;
     string namerawimage;
 
+    // GPIO Picture Trigger variables
+    bool pictureTriggerEnabled;
+    float pictureTriggerDelay;
+    int pictureTriggerGPIONumber;
+    float pictureTriggerDuration;
+    std::string pictureTriggerMode; // "hold" or "pulse"
+
     esp_err_t camera_capture(void);
     void takePictureWithFlash(int flash_duration);
+    void triggerPictureGPIO();
+    void deactivatePictureGPIO();
 
     void SetInitialParameter(void);
 

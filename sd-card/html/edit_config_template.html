@@ -699,6 +699,67 @@
             <td>$TOOLTIP_TakeImage_Demo</td>
         </tr>
 
+        <tr class="expert">
+            <td class="indent1">
+                <input type="checkbox" id="TakeImage_PictureTriggerGPIO_enabled" value="1" onclick='InvertEnableItem("TakeImage", "PictureTriggerGPIO")' unchecked>
+                <label for=TakeImage_PictureTriggerGPIO_enabled><class id="TakeImage_PictureTriggerGPIO_text" style="color:black;">Picture Trigger GPIO</class></label>
+            </td>
+            <td>
+                <select id="TakeImage_PictureTriggerGPIO_value1">
+                    <option value="true">enabled (true)</option>
+                    <option value="false" selected>disabled (false)</option>
+                </select>
+            </td>
+            <td>$TOOLTIP_TakeImage_PictureTriggerGPIO</td>
+        </tr>
+
+        <tr class="expert">
+            <td class="indent1">
+                <class id="TakeImage_PictureTriggerDelay_text" style="color:black;">Picture Trigger Delay</class>
+            </td>
+            <td>
+                <input required type="number" id="TakeImage_PictureTriggerDelay_value1" size="13" min="0" max="10" step="0.1" onchange="cameraParameterChanged()"
+                    oninput="(!validity.rangeUnderflow||(value=0)) && (!validity.rangeOverflow||(value=10));">Seconds
+            </td>
+            <td>$TOOLTIP_TakeImage_PictureTriggerDelay</td>
+        </tr>
+
+        <tr class="expert">
+            <td class="indent1">
+                <class id="TakeImage_PictureTriggerGPIONumber_text" style="color:black;">Picture Trigger GPIO Number</class>
+            </td>
+            <td>
+                <select id="TakeImage_PictureTriggerGPIONumber_value1" onchange="cameraParameterChanged()">
+                    <option value="12" selected>GPIO 12</option>
+                    <option value="13">GPIO 13</option>
+                </select>
+            </td>
+            <td>$TOOLTIP_TakeImage_PictureTriggerGPIONumber</td>
+        </tr>
+
+        <tr class="expert">
+            <td class="indent1">
+                <class id="TakeImage_PictureTriggerDuration_text" style="color:black;">Picture Trigger Duration</class>
+            </td>
+            <td>
+                <input required type="number" id="TakeImage_PictureTriggerDuration_value1" size="13" min="0.1" max="5" step="0.1" onchange="cameraParameterChanged()"
+                    oninput="(!validity.rangeUnderflow||(value=0.1)) && (!validity.rangeOverflow||(value=5));">Seconds
+            </td>
+            <td>$TOOLTIP_TakeImage_PictureTriggerDuration</td>
+        </tr>
+        <tr class="expert">
+            <td class="indent1">
+                <class id="TakeImage_PictureTriggerMode_text" style="color:black;">Picture Trigger Mode</class>
+            </td>
+            <td>
+                <select id="TakeImage_PictureTriggerMode_value1" onchange="cameraParameterChanged()">
+                    <option value="hold" selected>hold (keep active during picture)</option>
+                    <option value="pulse">pulse (momentary before picture)</option>
+                </select>
+            </td>
+            <td>$TOOLTIP_TakeImage_PictureTriggerMode</td>
+        </tr>
+
         <!------------- Alignment ------------------>
         <tr  style="border-bottom: 2px solid lightgray;" id="ex4">
             <td colspan="3" style="padding-left: 0px; padding-bottom: 3px;"><h4>Alignment</h4></td>
@@ -2340,6 +2401,10 @@ function UpdateInput() {
     WriteParameter(param, category, "TakeImage", "CamZoomSize", false);	
     WriteParameter(param, category, "TakeImage", "LEDIntensity", false);
     WriteParameter(param, category, "TakeImage", "Demo", false);
+    WriteParameter(param, category, "TakeImage", "PictureTriggerGPIO", false);
+    WriteParameter(param, category, "TakeImage", "PictureTriggerDelay", false);
+    WriteParameter(param, category, "TakeImage", "PictureTriggerGPIONumber", false);
+    WriteParameter(param, category, "TakeImage", "PictureTriggerDuration", false);
 	
     WriteParameter(param, category, "Alignment", "SearchFieldX", false);		
     WriteParameter(param, category, "Alignment", "SearchFieldY", false);		
@@ -2506,7 +2571,11 @@ function ReadParameterAll() {
     ReadParameter(param, "TakeImage", "CamZoomOffsetY", false);	
     ReadParameter(param, "TakeImage", "CamZoomSize", false);	
     ReadParameter(param, "TakeImage", "LEDIntensity", false);	
-    ReadParameter(param, "TakeImage", "Demo", false);	
+    ReadParameter(param, "TakeImage", "Demo", false);
+    ReadParameter(param, "TakeImage", "PictureTriggerGPIO", false);
+    ReadParameter(param, "TakeImage", "PictureTriggerDelay", false);
+    ReadParameter(param, "TakeImage", "PictureTriggerGPIONumber", false);
+    ReadParameter(param, "TakeImage", "PictureTriggerDuration", false);	
 
     ReadParameter(param, "Alignment", "SearchFieldX", false);	
     ReadParameter(param, "Alignment", "SearchFieldY", false);
